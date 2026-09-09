@@ -1,6 +1,6 @@
 {
-  "name": "BharatAI",
-  "description": "Indian multilingual LLM optimized for education and local knowledge",
+  "name": "TN LLM",
+  "description": "Tamil Nadu LLM optimized for education and local knowledge",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

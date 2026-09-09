@@ -1,4 +1,5 @@
-'use client'
+const fs = require('fs');
+const content = `'use client'
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
@@ -140,7 +141,7 @@ export default function TNLLM() {
       });
 
       if (response.ok) {
-        alert(`Successfully ingested ${file.name} into Knowledge Base!`);
+        alert(\`Successfully ingested \${file.name} into Knowledge Base!\`);
         if (view === 'knowledge') fetchDocuments();
       } else {
         alert('Failed to ingest document.');
@@ -155,7 +156,7 @@ export default function TNLLM() {
 
   const handleDeleteDocument = async (id: string) => {
     try {
-      await fetch(`/api/v1/knowledge?id=${id}`, { method: 'DELETE' });
+      await fetch(\`/api/v1/knowledge?id=\${id}\`, { method: 'DELETE' });
       setDocuments(prev => prev.filter(doc => doc.id !== id));
     } catch (e) {
       console.error(e);
@@ -206,21 +207,14 @@ export default function TNLLM() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/v1/bot', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: newMessages }),
       });
 
       if (!response.ok) {
-        let errorMessage = 'Failed to fetch response';
-        try {
-          const errorData = await response.json();
-          if (errorData.error) {
-            errorMessage = errorData.error;
-          }
-        } catch (e) {}
-        throw new Error(errorMessage);
+        throw new Error('Failed to fetch response');
       }
 
       const data = await response.json();
@@ -232,10 +226,9 @@ export default function TNLLM() {
       }));
     } catch (error: any) {
       console.error("Chat error:", error);
-      const errorMsg = error instanceof Error ? error.message : "Error processing request.";
       setSessions(prev => prev.map(s => {
         if (s.id === currentSessionId) {
-          return { ...s, messages: [...s.messages, { role: 'model', parts: [{ text: `Error: ${errorMsg}` }] }], updatedAt: new Date().toISOString() };
+          return { ...s, messages: [...s.messages, { role: 'model', parts: [{ text: "Error processing request." }] }], updatedAt: new Date().toISOString() };
         }
         return s;
       }));
@@ -254,7 +247,7 @@ export default function TNLLM() {
     return (
       <button 
         onClick={() => handleNavClick(id)}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${isActive ? 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-400 border border-indigo-500/20 shadow-[inset_0_0_12px_rgba(99,102,241,0.1)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5 border border-transparent'}`}
+        className={\`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 \${isActive ? 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-400 border border-indigo-500/20 shadow-[inset_0_0_12px_rgba(99,102,241,0.1)]' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5 border border-transparent'}\`}
       >
         <Icon size={18} className={isActive ? 'text-indigo-400' : 'text-gray-500'} />
         {label}
@@ -266,7 +259,7 @@ export default function TNLLM() {
   };
 
   return (
-    <div className={`h-screen w-full flex bg-[#F8FAFC] font-sans overflow-hidden text-slate-900 ${isDarkTheme ? 'dark' : ''}`}>
+    <div className={\`h-screen w-full flex bg-[#F8FAFC] font-sans overflow-hidden text-slate-900 \${isDarkTheme ? 'dark' : ''}\`}>
       
       {/* --- SIDEBAR (Desktop & Mobile) --- */}
       {/* Overlay for mobile */}
@@ -286,7 +279,7 @@ export default function TNLLM() {
         initial={{ x: '-100%' }}
         animate={{ x: isMobileMenuOpen ? 0 : (typeof window !== 'undefined' && window.innerWidth >= 1024 ? 0 : '-100%') }}
         transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-        className={`fixed inset-y-0 left-0 w-[280px] bg-[#020617] text-white flex flex-col flex-shrink-0 border-r border-white/5 z-50 shadow-2xl lg:relative lg:translate-x-0 lg:!transform-none`}
+        className={\`fixed inset-y-0 left-0 w-[280px] bg-[#020617] text-white flex flex-col flex-shrink-0 border-r border-white/5 z-50 shadow-2xl lg:relative lg:translate-x-0 lg:!transform-none\`}
       >
         
         {/* Brand */}
@@ -483,9 +476,9 @@ export default function TNLLM() {
                     onClick={() => setView(feature.view as any)}
                     className="group cursor-pointer bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all duration-300 relative overflow-hidden flex flex-col"
                   >
-                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500 ease-out z-0 ${feature.accent}`}></div>
+                    <div className={\`absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500 ease-out z-0 \${feature.accent}\`}></div>
                     <div className="relative z-10 flex-1 flex flex-col">
-                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-6 text-white transform group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}>
+                      <div className={\`w-14 h-14 rounded-2xl bg-gradient-to-br \${feature.color} flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-6 text-white transform group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300\`}>
                         <feature.icon size={24} />
                       </div>
                       <h3 className="text-xl font-bold text-slate-800 mb-2">{feature.title}</h3>
@@ -538,7 +531,7 @@ export default function TNLLM() {
                      <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-bold text-sm opacity-20 mix-blend-multiply"></div>
                      <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-bold text-sm z-0">Interactive Chart Area</div>
                      {[40, 60, 30, 80, 50, 90, 70, 100, 60, 40, 80, 50].map((h, i) => (
-                       <div key={i} className="flex-1 bg-gradient-to-t from-indigo-500/30 to-indigo-500/10 rounded-t-md hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 cursor-pointer group relative z-10" style={{ height: `${h}%` }}>
+                       <div key={i} className="flex-1 bg-gradient-to-t from-indigo-500/30 to-indigo-500/10 rounded-t-md hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 cursor-pointer group relative z-10" style={{ height: \`\${h}%\` }}>
                           <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                             {h}00
                           </div>
@@ -561,7 +554,7 @@ export default function TNLLM() {
                       { icon: MessageSquare, title: 'New feedback received', time: '3 hours ago', color: 'bg-orange-100 text-orange-600', desc: '5-star rating added' },
                     ].map((act, i) => (
                       <div key={i} className="flex items-start gap-4 group cursor-pointer">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${act.color} group-hover:scale-110 transition-transform`}>
+                        <div className={\`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 \${act.color} group-hover:scale-110 transition-transform\`}>
                           <act.icon size={18} />
                         </div>
                         <div className="flex-1">
@@ -654,18 +647,18 @@ export default function TNLLM() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           key={index} 
-                          className={`flex gap-3 md:gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}
+                          className={\`flex gap-3 md:gap-4 \${msg.role === 'user' ? 'justify-end' : ''}\`}
                         >
                           {msg.role === 'model' && (
                             <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white shadow-sm mt-1">
                               <Zap size={16} className="md:w-5 md:h-5 w-4 h-4" />
                             </div>
                           )}
-                          <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl md:rounded-3xl px-5 md:px-6 py-4 shadow-sm text-[15px] md:text-base leading-relaxed font-medium ${
+                          <div className={\`max-w-[85%] md:max-w-[80%] rounded-2xl md:rounded-3xl px-5 md:px-6 py-4 shadow-sm text-[15px] md:text-base leading-relaxed font-medium \${
                             msg.role === 'user' 
                               ? 'bg-slate-900 text-white rounded-tr-sm' 
                               : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
-                          }`}>
+                          }\`}>
                             {msg.parts.map((p, i) => <p key={i} className="whitespace-pre-wrap">{p.text}</p>)}
                             
                             {/* Message Actions */}
@@ -715,7 +708,7 @@ export default function TNLLM() {
                         rows={1}
                       />
                       <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                        <button type="button" onClick={startListening} className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors ${isListening ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-slate-50 hover:bg-slate-100 text-slate-500'}`}>
+                        <button type="button" onClick={startListening} className={\`w-10 h-10 flex items-center justify-center rounded-xl transition-colors \${isListening ? 'bg-red-50 text-red-500 animate-pulse' : 'bg-slate-50 hover:bg-slate-100 text-slate-500'}\`}>
                           <Mic size={20} />
                         </button>
                         <button type="button" className="w-10 h-10 flex items-center justify-center rounded-xl transition-colors bg-slate-50 hover:bg-slate-100 text-slate-500">
@@ -837,9 +830,9 @@ export default function TNLLM() {
                 <div className="p-6 overflow-x-auto relative group">
                   <button className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"><Copy size={16}/></button>
                   <pre className="text-base font-mono text-slate-300 leading-relaxed">
-                    <span className="text-pink-400">curl</span> https://api.tnllm.ai/v1/chat/completions \<br/>
-                    {'  '}-H <span className="text-emerald-400">"Content-Type: application/json"</span> \<br/>
-                    {'  '}-H <span className="text-emerald-400">"Authorization: Bearer $TN_API_KEY"</span> \<br/>
+                    <span className="text-pink-400">curl</span> https://api.tnllm.ai/v1/chat/completions \\<br/>
+                    {'  '}-H <span className="text-emerald-400">"Content-Type: application/json"</span> \\<br/>
+                    {'  '}-H <span className="text-emerald-400">"Authorization: Bearer \$TN_API_KEY"</span> \\<br/>
                     {'  '}-d <span className="text-yellow-200">'{'{'}"model": "tn-llm-7b", "messages": [{'{'}"role": "user", "content": "Hello!"{"}"}]{'}'}'</span>
                   </pre>
                 </div>
@@ -866,3 +859,5 @@ export default function TNLLM() {
     </div>
   );
 }
+`;
+fs.writeFileSync('/app/applet/app/page.tsx', content);
