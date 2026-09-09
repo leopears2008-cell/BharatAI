@@ -1,6 +1,6 @@
 {
-  "name": "TN LLM",
-  "description": "Tamil Nadu LLM optimized for education and local knowledge",
+  "name": "BharatAI",
+  "description": "Production-grade, multilingual Indian AI platform with reliable RAG and tool calling.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

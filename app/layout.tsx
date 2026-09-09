@@ -1,25 +1,20 @@
 import type {Metadata} from 'next';
-import './globals.css'; // Global styles
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'TN LLM',
-  description: 'Tamil Nadu LLM optimized for education and local knowledge.',
+  title: 'BharatAI',
+  description: 'Production-grade, multilingual Indian AI platform with reliable RAG and tool calling.',
   openGraph: {
-    title: 'TN LLM',
-    description: 'Tamil Nadu LLM optimized for education and local knowledge.',
+    title: 'BharatAI',
+    description: 'Production-grade, multilingual Indian AI platform with reliable RAG and tool calling.',
     type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'TN LLM',
-    description: 'Tamil Nadu LLM optimized for education and local knowledge.',
   },
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="en">
-      <body suppressHydrationWarning>{children}</body>
+    <html>
+      <body suppressHydrationWarning className="bg-slate-50">{children}</body>
     </html>
   );
 }
