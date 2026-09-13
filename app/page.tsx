@@ -27,7 +27,7 @@ export default function Home() {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const fetchConversations = async () => {
+  async function fetchConversations() {
     try {
       const res = await fetch("/api/conversations");
       if (res.ok) {
