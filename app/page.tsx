@@ -64,7 +64,7 @@ export default function Home() {
 
   return <div className="flex h-[100dvh] overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
     {sidebarOpen && <button aria-label="Close sidebar" onClick={()=>setSidebarOpen(false)} className="fixed inset-0 z-30 bg-black/50 md:hidden"/>}
-    <aside className={`fixed md:relative z-40 h-full w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] transition-transform ${sidebarOpen?"translate-x-0":"-translate-x-full md:translate-x-0"}`}>
+    <aside className={"fixed md:relative z-40 h-full w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] transition-transform "+(sidebarOpen?"translate-x-0":"-translate-x-full md:translate-x-0")}>
       <div className="flex h-16 items-center justify-between px-4 border-b border-[var(--border)]">
         <div className="flex items-center gap-2.5"><div className="grid size-8 place-items-center rounded-xl bg-[var(--accent)]"><Sparkles size={17}/></div><span className="font-semibold">BharatAI</span></div>
         <button aria-label="Close sidebar" onClick={()=>setSidebarOpen(false)} className="rounded-lg p-2 text-[var(--muted)] hover:bg-[var(--surface-hover)] md:hidden"><Menu size={19}/></button>
