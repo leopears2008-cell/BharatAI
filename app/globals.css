@@ -2,44 +2,127 @@
 @plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 
+/* ---------- Design tokens ---------- */
+:root,
+:root[data-theme="dark"] {
+  --background: #0b0d10;
+  --sidebar: #111418;
+  --surface: #161a20;
+  --surface-hover: #1e232b;
+  --line: #252a32;
+  --foreground: #f4f5f7;
+  --muted: #9ca3af;
+  --accent: #8ab4ff;
+  --accent-foreground: #0b0d10;
+  --danger: #f87171;
+  --success: #4ade80;
+  --grad-a: #8ab4ff;
+  --grad-b: #b39dff;
+  --grad-c: #f4a6c8;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --sidebar: #f0f4f9;
+  --surface: #f0f4f9;
+  --surface-hover: #e3e9f1;
+  --line: #dde3ea;
+  --foreground: #1f2328;
+  --muted: #5f6b7a;
+  --accent: #3b5bdb;
+  --accent-foreground: #ffffff;
+  --danger: #d92d20;
+  --success: #067647;
+  --grad-a: #3b5bdb;
+  --grad-b: #7a4fd6;
+  --grad-c: #d6457f;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-sidebar: var(--sidebar);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-line: var(--line);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+}
+
+html,
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Bengali", sans-serif;
+}
+
+.brand-gradient {
+  background: linear-gradient(90deg, var(--grad-a), var(--grad-b), var(--grad-c));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Markdown ---------- */
 .markdown-body {
-  @apply text-slate-800 text-sm leading-relaxed;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
 }
+.markdown-body > :first-child { margin-top: 0; }
+.markdown-body > :last-child { margin-bottom: 0; }
+.markdown-body p { margin: 0 0 1rem; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3 { font-weight: 600; margin: 1.5rem 0 0.5rem; line-height: 1.3; }
+.markdown-body h1 { font-size: 1.4rem; }
+.markdown-body h2 { font-size: 1.2rem; }
+.markdown-body h3 { font-size: 1.05rem; }
+.markdown-body ul { list-style: disc; padding-left: 1.4rem; margin: 0 0 1rem; }
+.markdown-body ol { list-style: decimal; padding-left: 1.4rem; margin: 0 0 1rem; }
+.markdown-body li { margin: 0.25rem 0; }
+.markdown-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.markdown-body blockquote { border-left: 3px solid var(--line); padding-left: 1rem; color: var(--muted); margin: 0 0 1rem; }
+.markdown-body hr { border: 0; border-top: 1px solid var(--line); margin: 1.5rem 0; }
+.markdown-body .inline-code {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.375rem;
+  font-size: 0.85em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.markdown-body .table-wrap { overflow-x: auto; margin: 0 0 1rem; border: 1px solid var(--line); border-radius: 0.75rem; }
+.markdown-body table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.markdown-body th, .markdown-body td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); text-align: left; }
+.markdown-body th { background: var(--surface); font-weight: 600; }
+.markdown-body tr:last-child td { border-bottom: 0; }
 
-.markdown-body p {
-  @apply mb-4 last:mb-0;
-}
+.code-block { margin: 0 0 1rem; border: 1px solid var(--line); border-radius: 0.75rem; overflow: hidden; background: var(--surface); }
+.code-block-header { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.75rem; font-size: 0.75rem; color: var(--muted); border-bottom: 1px solid var(--line); }
+.code-block pre { margin: 0; padding: 0.9rem 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
-.markdown-body ul {
-  @apply list-disc list-inside mb-4 space-y-1;
-}
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
 
-.markdown-body ol {
-  @apply list-decimal list-inside mb-4 space-y-1;
-}
-
-.markdown-body pre {
-  @apply bg-slate-900 text-slate-100 p-4 rounded-xl overflow-x-auto mb-4 text-xs font-mono;
-}
-
-.markdown-body code {
-  @apply bg-slate-100 text-pink-600 px-1.5 py-0.5 rounded-md text-xs font-mono;
-}
-
-.markdown-body pre code {
-  @apply bg-transparent text-inherit p-0;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
+@keyframes bharat-dot { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+.typing-dot { animation: bharat-dot 1.2s infinite; }

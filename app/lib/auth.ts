@@ -2,15 +2,26 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
-const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || "default_super_secret_key_change_in_production");
+/**
+ * The signing secret is mandatory. There is deliberately no fallback value:
+ * a missing/weak secret must fail closed rather than sign forgeable sessions.
+ */
+function getSecretKey(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error("JWT_SECRET is not set or shorter than 32 characters");
+  }
+  return new TextEncoder().encode(secret);
+}
 
 export async function createSession(userId: string) {
+  const key = getSecretKey();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
   const session = await new SignJWT({ userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(SECRET_KEY);
+    .sign(key);
 
   const cookieStore = await cookies();
   cookieStore.set("session", session, {
@@ -24,22 +35,22 @@ export async function createSession(userId: string) {
 
 export async function verifySession(token: string) {
   try {
-    const { payload } = await jwtVerify(token, SECRET_KEY, { algorithms: ["HS256"] });
+    const { payload } = await jwtVerify(token, getSecretKey(), { algorithms: ["HS256"] });
     return payload;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
 
 export async function getSession(req?: NextRequest) {
-  let token;
+  let token: string | undefined;
   if (req) {
     token = req.cookies.get("session")?.value;
   } else {
     const cookieStore = await cookies();
     token = cookieStore.get("session")?.value;
   }
-  
+
   if (!token) return null;
   return await verifySession(token);
 }
