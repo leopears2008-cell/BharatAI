@@ -5,11 +5,10 @@ import { db } from "../../lib/db";
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession(req);
-    const userId = (session?.userId as string) || "anonymous-123";
-
-    const convs = await db.conversations.findByUserId(userId);
-    return NextResponse.json(convs);
+    if (!session?.userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return NextResponse.json(await db.conversations.findByUserId(String(session.userId)));
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch conversations" }, { status: 500 });
+    console.error("Conversation list error:", error);
+    return NextResponse.json({ error: "Unable to load conversations." }, { status: 500 });
   }
 }
