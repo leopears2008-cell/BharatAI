@@ -9,7 +9,7 @@ from app.db import Conversation,Message,get_session,get_conversation
 from app.models import ChatRequest
 from app.rag import retrieve
 from app.router import ModelRouter
-from app.tools import TOOL_DECLARATIONS,execute_tool
+from app.tools import TOOL_DECLARATIONS,execute_tool\nfrom app.rate_limit import enforce
 router=APIRouter();models=ModelRouter()
 async def dep():
     async for s in get_session():yield s
@@ -28,7 +28,7 @@ async def agent(req,s):
         for c in calls:contents.append(types.Content(role="user",parts=[types.Part.from_function_response(name=c.name,response={"result":await execute_tool(c.name,dict(c.args or {}))},id=c.id)]))
     return contents,system
 @router.post("/v1/chat")
-async def chat(req:ChatRequest,user=Depends(current_user),s:AsyncSession=Depends(dep)):
+async def chat(req:ChatRequest,request, user=Depends(current_user),s:AsyncSession=Depends(dep)):\n    enforce(request)
     if not req.messages:raise HTTPException(400,"At least one message is required")
     if len(req.messages[-1].content)>settings.max_message_chars:raise HTTPException(413,"Message is too large")
     cid=req.conversation_id or uuid.uuid4().hex;c=await get_conversation(s,cid,user["sub"])
