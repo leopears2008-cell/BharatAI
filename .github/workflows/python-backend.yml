@@ -33,6 +33,7 @@ jobs:
       REDIS_URL: redis://localhost:6379/0
       JWT_SECRET: test-secret-change-in-ci
       AUTH_REQUIRED: "true"
+      PYTHONPATH: .
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
