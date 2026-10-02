@@ -26,7 +26,11 @@ async def observability_middleware(request:Request,call_next):
         logger.error(json.dumps({"event":"request_error","request_id":request_id,"method":request.method,"path":request.url.path,"duration_ms":round(duration*1000,2)}))
         raise
     duration=time.perf_counter()-start
-    response.headers["X-Request-ID"]=request_id\n    response.headers["X-Content-Type-Options"]="nosniff"\n    response.headers["X-Frame-Options"]="DENY"\n    response.headers["Referrer-Policy"]="strict-origin-when-cross-origin"\n    response.headers["Permissions-Policy"]="camera=(), microphone=(), geolocation=()"
+    response.headers["X-Request-ID"]=request_id
+    response.headers["X-Content-Type-Options"]="nosniff"
+    response.headers["X-Frame-Options"]="DENY"
+    response.headers["Referrer-Policy"]="strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"]="camera=(), microphone=(), geolocation=()"
     metrics.requests.labels(request.method,request.url.path,str(response.status_code)).inc()
     metrics.latency.labels(request.method,request.url.path).observe(duration)
     logger.info(json.dumps({"event":"request","request_id":request_id,"method":request.method,"path":request.url.path,"status":response.status_code,"duration_ms":round(duration*1000,2)}))
