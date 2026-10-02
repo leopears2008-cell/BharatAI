@@ -40,3 +40,6 @@ For production use PostgreSQL/pgvector, Redis, HTTPS, a strong JWT secret, AUTH_
 - GET /metrics
 
 Run tests with pytest -q and the benchmark with python evals/run_eval.py.
+
+
+CI verification uses PostgreSQL/pgvector and Redis service containers with PYTHONPATH configured for pytest.
