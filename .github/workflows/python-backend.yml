@@ -1,20 +1,39 @@
 name: BharatAI Python Backend
 on:
- push:
-  branches: [main]
-  paths: ["backend/**"]
- pull_request:
-  paths: ["backend/**"]
+  push:
+    branches: [main]
+    paths: ["backend/**"]
+  pull_request:
+    paths: ["backend/**"]
 jobs:
- test:
-  runs-on: ubuntu-latest
-  defaults:
-   run:
-    working-directory: backend
-  steps:
-   - uses: actions/checkout@v4
-   - uses: actions/setup-python@v5
-     with: {python-version: "3.12"}
-   - run: pip install -r requirements.txt
-   - run: python -m compileall -q app
-   - run: pytest -q
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bharatai
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d bharatai"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/bharatai
+      REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET: test-secret-change-in-ci
+      AUTH_REQUIRED: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q app
+      - run: pytest -q
