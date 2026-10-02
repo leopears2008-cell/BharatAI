@@ -1,53 +1,69 @@
 # BharatAI
 
-BharatAI is a production-grade, multilingual Indian AI platform with reliable RAG, grounded answers, tool calling, conversation memory, and citations. 
-
-**Note: BharatAI currently uses Google Gemini as its underlying LLM.** It is not a custom-trained foundation model from scratch, but rather a sophisticated AI architecture built on top of the Gemini API.
+BharatAI is an India-focused, multilingual AI platform with a Next.js/React client and a production-oriented Python FastAPI AI backend.
 
 ## Architecture
 
-User 
-↓ 
-Next.js Frontend (React, Tailwind v4)
-↓ 
-Secure API Layer (Next.js App Router, JWT Auth)
-↓ 
-Intent / Request Router
-↓ 
-Gemini LLM (gemini-3.6-flash)
-├── RAG Retrieval (In-Memory Modular Store, text-embedding-004)
-├── Web Search (Mock/Tool Registry)
-├── Application Tools (Time, Calculator)
-└── Conversation Memory (Local Storage Layer)
-↓ 
-Grounding / Validation Layer (Citation Injection)
-↓ 
-Final Response + Citations (Streaming)
+User
+↓
+Next.js / React UI
+↓ HTTPS + streaming
+FastAPI Gateway
+↓
+AI Orchestrator
+→ Context + Memory
+→ Model Router (Gemini / OpenAI-compatible / Qwen-compatible)
+→ Planner / Tool Executor
+→ Hybrid RAG (PostgreSQL + pgvector + HNSW)
+→ Web Research
+→ Multimodal Analysis
+↓
+Verification / Sources
+↓
+Streaming Markdown response
+↓
+Prometheus / structured logs / evaluation
 
-## Features
-- **Multilingual Support:** English, Hindi, Tamil, Telugu, Bengali, Kannada, Malayalam, Marathi.
-- **RAG & Grounding:** Custom embedding chunker and semantic search.
-- **Conversational Memory:** Preserves multi-turn state.
-- **Streaming Chat:** Real-time token rendering.
-- **Tool Calling:** Declarative tool registry for extending capabilities.
-- **Authentication:** JWT cookie-based session management.
+## Implemented capabilities
 
-## Environment Variables
+- Real token streaming and persistent multi-turn conversations
+- Automatic context-window management and deterministic long-chat summaries
+- Bounded planner/router/tool execution with tool-result validation
+- Gemini primary model with OpenAI-compatible and Qwen-compatible fallbacks
+- PostgreSQL pgvector + HNSW hybrid semantic/lexical retrieval, deduplication and source tracking
+- Web search caching plus search → fetch → extract research
+- Source/citation output in answers
+- Persistent user memory with explicit GET/DELETE controls
+- JWT access tokens with rotating persistent refresh sessions
+- Redis distributed rate limiting
+- Security headers, trusted-host protection and request IDs
+- Multimodal image/PDF/document/CSV/code analysis endpoint
+- Conversation search, rename and delete APIs
+- Prometheus metrics, structured request logs and CI regression tests
+- Production Docker/Render configuration
 
-Copy `.env.example` to `.env` and configure:
-- `GEMINI_API_KEY`: Your Google Gemini API key.
-- `JWT_SECRET`: Random string for signing sessions.
-- `APP_URL`: The deployed URL (e.g., http://localhost:3000).
+## Frontend
 
-## Setup & Deployment
+```bash
+npm ci
+npm run dev
+npm run lint
+npm run build
+```
 
-1. Install dependencies: `npm install`
-2. Run development server: `npm run dev`
-3. Production build: `npm run build`
-4. Start production server: `npm run start`
+Set `NEXT_PUBLIC_PYTHON_API_URL` to the deployed FastAPI URL.
 
-## Security Considerations
-- Authentication is enforced via Next.js Middleware.
-- API keys are NEVER exposed to the frontend browser bundle.
-- Inputs are validated at the API boundaries.
-- Rate limiting should be handled at the ingress/proxy layer (e.g., Cloud Run or Vercel).
+## Backend
+
+```bash
+cd backend
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
+```
+
+Use PostgreSQL + pgvector and Redis in production. Never commit API keys, JWT secrets, database passwords or refresh tokens.
+
+## Important
+
+BharatAI is an application architecture built on configurable foundation models; it is not a foundation model trained from scratch.
