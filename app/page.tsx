@@ -25,13 +25,14 @@ export default function Home() {
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[messages]);
 
   async function loadConversations(){
-    const res=await fetch("/api/conversations");
+    const token=localStorage.getItem("bharatai_token");
+    const res=await fetch((process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000")+"/api/v1/conversations",{headers:token?{Authorization:"Bearer "+token}:{}});
     if(res.status===401){ router.push("/login"); return; }
     if(res.ok) setConversations(await res.json());
   }
 
   function newChat(){ setMessages([]); setConversationId(undefined); setInput(""); }
-  async function logout(){ await fetch("/api/auth",{method:"DELETE"}); router.push("/login"); }
+  async function logout(){ localStorage.removeItem("bharatai_token"); router.push("/login"); }
 
   async function sendMessage(){
     const text=input.trim();
@@ -40,7 +41,7 @@ export default function Home() {
     setMessages([...next,{role:"model",content:""}]); setInput(""); setLoading(true);
     const controller=new AbortController(); abortRef.current=controller;
     try{
-      const res=await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"}/api/v1/chat",{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,
+      const token=localStorage.getItem("bharatai_token"); const res=await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"}/api/v1/chat",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}: {})},signal:controller.signal,
         body:JSON.stringify({messages:next,conversation_id:conversationId,language})});
       if(res.status===401){router.push("/login");return;}
       if(!res.ok) throw new Error("request_failed");
@@ -71,7 +72,7 @@ export default function Home() {
       <div className="p-3"><button onClick={newChat} className="flex w-full items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm font-medium hover:bg-[var(--surface-hover)]"><Plus size={17}/> New chat</button></div>
       <div className="px-3 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">Recent chats</div>
       <div className="custom-scrollbar flex-1 overflow-y-auto p-3 space-y-1">
-        {conversations.map(c=><button key={c.id} onClick={async()=>{const res=await fetch(`/api/conversations/${c.id}`);if(res.ok){const d=await res.json();setConversationId(c.id);setMessages(d.messages||[]);}}} className="w-full truncate rounded-lg px-3 py-2.5 text-left text-sm text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]">{c.title}</button>)}
+        {conversations.map(c=><button key={c.id} onClick={async()=>{const token=localStorage.getItem("bharatai_token"); const res=await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"}/api/v1/conversations/${c.id}`,{headers:token?{Authorization:"Bearer "+token}:{}});if(res.ok){const d=await res.json();setConversationId(c.id);setMessages(d.messages||[]);}}} className="w-full truncate rounded-lg px-3 py-2.5 text-left text-sm text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]">{c.title}</button>)}
       </div>
       <div className="border-t border-[var(--border)] p-3"><button onClick={logout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-white"><LogOut size={17}/> Sign out</button></div>
     </aside>
