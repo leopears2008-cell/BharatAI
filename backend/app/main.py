@@ -8,7 +8,8 @@ from app.api.health import router as health_router
 from app.api.auth import router as auth_router
 from app.api.conversations import router as conversations_router
 from app.api.chat import router as chat_router
-from app.api.memory import router as memory_router\nfrom app.api.multimodal import router as multimodal_router
+from app.api.memory import router as memory_router
+from app.api.multimodal import router as multimodal_router
 from app.observability import observability_middleware,metrics_response
 @asynccontextmanager
 async def lifespan(app): await init_db(); yield
