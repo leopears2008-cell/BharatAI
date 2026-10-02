@@ -41,7 +41,7 @@ export default function Home() {
     setMessages([...next,{role:"model",content:""}]); setInput(""); setLoading(true);
     const controller=new AbortController(); abortRef.current=controller;
     try{
-      const token=localStorage.getItem("bharatai_token"); const res=await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"}/api/v1/chat",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}: {})},signal:controller.signal,
+      const token=localStorage.getItem("bharatai_token"); const api=(process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"); const res=await fetch(api+"/api/v1/chat",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}: {})},signal:controller.signal,
         body:JSON.stringify({messages:next,conversation_id:conversationId,language})});
       if(res.status===401){router.push("/login");return;}
       if(!res.ok) throw new Error("request_failed");
