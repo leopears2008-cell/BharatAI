@@ -1,239 +1,113 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, Plus, Send, Square, Bot, LogOut, Sparkles, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Send, Menu, Plus, User, Bot, Loader2, LogOut, FileText, ChevronDown } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-type Message = { role: "user" | "model"; content: string; };
+type Message = { role: "user" | "model"; content: string };
 
 export default function Home() {
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [language, setLanguage] = useState("English");
-  
-  const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const [messages,setMessages]=useState<Message[]>([]);
+  const [input,setInput]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [conversations,setConversations]=useState<any[]>([]);
+  const [sidebarOpen,setSidebarOpen]=useState(true);
+  const [language,setLanguage]=useState("English");
+  const [conversationId,setConversationId]=useState<string>();
+  const [copied,setCopied]=useState<number|null>(null);
+  const abortRef=useRef<AbortController|null>(null);
+  const endRef=useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchConversations();
-  }, []);
+  useEffect(()=>{ loadConversations(); },[]);
+  useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[messages]);
 
-  useEffect(() => {
-    endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  async function loadConversations(){
+    const res=await fetch("/api/conversations");
+    if(res.status===401){ router.push("/login"); return; }
+    if(res.ok) setConversations(await res.json());
+  }
 
-  async function fetchConversations() {
-    try {
-      const res = await fetch("/api/conversations");
-      if (res.ok) {
-        const data = await res.json();
-        setConversations(data);
+  function newChat(){ setMessages([]); setConversationId(undefined); setInput(""); }
+  async function logout(){ await fetch("/api/auth",{method:"DELETE"}); router.push("/login"); }
+
+  async function sendMessage(){
+    const text=input.trim();
+    if(!text || loading) return;
+    const next=[...messages,{role:"user" as const,content:text}];
+    setMessages([...next,{role:"model",content:""}]); setInput(""); setLoading(true);
+    const controller=new AbortController(); abortRef.current=controller;
+    try{
+      const res=await fetch("/api/v1/bot",{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,
+        body:JSON.stringify({messages:next,conversationId,language})});
+      if(res.status===401){router.push("/login");return;}
+      if(!res.ok) throw new Error("request_failed");
+      const id=res.headers.get("X-Conversation-Id"); if(id) setConversationId(id);
+      const reader=res.body?.getReader(); if(!reader) throw new Error("no_stream");
+      const decoder=new TextDecoder(); let answer="";
+      while(true){
+        const {value,done}=await reader.read(); if(done) break;
+        answer+=decoder.decode(value,{stream:true}).replace(/__META_CONV_ID__:[^\\n]*/g,"");
+        setMessages(prev=>{const copy=[...prev]; copy[copy.length-1]={role:"model",content:answer}; return copy;});
       }
-    } catch (e) {
-      console.error(e);
-    }
-  };
+      await loadConversations();
+    }catch(error){
+      if((error as Error).name!=="AbortError") setMessages(prev=>{const copy=[...prev]; copy[copy.length-1]={role:"model",content:"I couldn't complete that request. Please try again."};return copy;});
+    }finally{setLoading(false);abortRef.current=null;}
+  }
 
-  const handleLogout = async () => {
-    await fetch("/api/auth", { method: "DELETE" });
-    router.push("/login");
-  };
+  function stop(){ abortRef.current?.abort(); setLoading(false); }
+  async function copyText(text:string,index:number){ await navigator.clipboard.writeText(text); setCopied(index); setTimeout(()=>setCopied(null),1200); }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
-
-    const userMessage = input.trim();
-    setInput("");
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/v1/bot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          messages: [...messages, { role: "user", content: userMessage }],
-          language 
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch");
-      }
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-      
-      let aiResponse = "";
-      setMessages(prev => [...prev, { role: "model", content: "" }]);
-
-      while (true) {
-        const { value, done } = await reader!.read();
-        if (done) break;
-        
-        const chunk = decoder.decode(value, { stream: true });
-        
-        // Handle meta conv id
-        if (chunk.includes("__META_CONV_ID__:_")) continue; // Simplification, normally parse it cleanly.
-
-        aiResponse += chunk;
-        setMessages(prev => {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = { role: "model", content: aiResponse.replace(/__META_CONV_ID__:.*/g, "") };
-          return newMessages;
-        });
-      }
-      
-      fetchConversations();
-    } catch (error) {
-      setMessages(prev => [...prev, { role: "model", content: "Error: Unable to reach the server. Please try again." }]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="flex h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-20 w-72 bg-slate-900 text-slate-300 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="p-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <Bot size={20} className="text-white" />
-            </div>
-            <h1 className="text-white font-bold text-lg tracking-tight">BharatAI</h1>
-          </div>
-          <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 hover:bg-slate-800 rounded-lg">
-            <Menu size={20} />
-          </button>
-        </div>
-
-        <div className="p-4">
-          <button onClick={() => setMessages([])} className="w-full flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-xl text-sm font-medium transition-colors border border-slate-700">
-            <Plus size={16} /> New Chat
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Recent Chats</h2>
-          {conversations.length === 0 ? (
-            <p className="text-sm text-slate-600 text-center py-4">No recent conversations.</p>
-          ) : (
-            conversations.map(conv => (
-              <button key={conv.id} className="w-full text-left truncate px-3 py-2 text-sm hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-200">
-                {conv.title}
-              </button>
-            ))
-          )}
-        </div>
-
-        <div className="p-4 border-t border-slate-800">
-          <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-            <LogOut size={18} /> Sign Out
-          </button>
-        </div>
+  return <div className="flex h-[100dvh] overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+    {sidebarOpen && <button aria-label="Close sidebar" onClick={()=>setSidebarOpen(false)} className="fixed inset-0 z-30 bg-black/50 md:hidden"/>}
+    <aside className={`fixed md:relative z-40 h-full w-[280px] shrink-0 border-r border-[var(--border)] bg-[var(--surface)] transition-transform ${sidebarOpen?"translate-x-0":"-translate-x-full md:translate-x-0"}`}>
+      <div className="flex h-16 items-center justify-between px-4 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2.5"><div className="grid size-8 place-items-center rounded-xl bg-[var(--accent)]"><Sparkles size={17}/></div><span className="font-semibold">BharatAI</span></div>
+        <button aria-label="Close sidebar" onClick={()=>setSidebarOpen(false)} className="rounded-lg p-2 text-[var(--muted)] hover:bg-[var(--surface-hover)] md:hidden"><Menu size={19}/></button>
       </div>
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 flex items-center justify-between px-4 bg-white border-b border-slate-200 shadow-sm z-10">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
-              <Menu size={20} />
-            </button>
-            <span className="font-semibold text-slate-800 hidden sm:block">BharatAI Enterprise Model</span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <select 
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block px-3 py-1.5 text-slate-700 font-medium"
-            >
-              <option value="English">English</option>
-              <option value="Hindi">Hindi (हिन्दी)</option>
-              <option value="Tamil">Tamil (தமிழ்)</option>
-              <option value="Telugu">Telugu (తెలుగు)</option>
-              <option value="Bengali">Bengali (বাংলা)</option>
-            </select>
-          </div>
-        </header>
-
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50">
-          <div className="max-w-3xl mx-auto space-y-6">
-            {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center mt-32">
-                <div className="w-16 h-16 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-6">
-                  <Bot size={32} className="text-indigo-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">How can I help you today?</h2>
-                <p className="text-slate-500 max-w-sm text-center mb-8">I am BharatAI, an enterprise-grade AI optimized for local Indian languages, tool calling, and grounded RAG responses.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
-                  {["What are the key government schemes for farmers in Tamil Nadu?", "Explain quantum computing in simple Hindi.", "How do I securely store API keys?", "Write a Python script for web scraping."].map(prompt => (
-                     <button key={prompt} onClick={() => setInput(prompt)} className="p-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 text-left hover:border-indigo-300 hover:shadow-md transition-all font-medium">
-                       {prompt}
-                     </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              messages.map((msg, i) => (
-                <div key={i} className={`flex gap-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  {msg.role === "model" && (
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 mt-1">
-                      <Bot size={16} className="text-white" />
-                    </div>
-                  )}
-                  <div className={`max-w-[85%] px-5 py-4 rounded-2xl text-sm leading-relaxed ${msg.role === "user" ? "bg-indigo-600 text-white rounded-br-none" : "bg-white border border-slate-200 text-slate-800 shadow-sm rounded-bl-none"}`}>
-                    {msg.role === "user" ? (
-                      msg.content
-                    ) : (
-                      <div className="markdown-body prose prose-sm prose-slate max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content || "..."}</ReactMarkdown>
-                      </div>
-                    )}
-                  </div>
-                  {msg.role === "user" && (
-                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mt-1">
-                      <User size={16} className="text-slate-600" />
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-            <div ref={endOfMessagesRef} />
-          </div>
-        </main>
-
-        <footer className="p-4 bg-white border-t border-slate-200">
-          <div className="max-w-3xl mx-auto">
-            <form onSubmit={handleSubmit} className="relative">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask BharatAI anything..."
-                disabled={loading}
-                className="w-full pl-5 pr-14 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium shadow-sm disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim() || loading}
-                className="absolute right-2 top-2 bottom-2 aspect-square bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl flex items-center justify-center transition-colors disabled:opacity-50 disabled:hover:bg-indigo-600 shadow-sm"
-              >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="ml-0.5" />}
-              </button>
-            </form>
-            <p className="text-center text-xs text-slate-400 mt-3 font-medium">BharatAI may produce inaccurate information about people, places, or facts.</p>
-          </div>
-        </footer>
+      <div className="p-3"><button onClick={newChat} className="flex w-full items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 text-sm font-medium hover:bg-[var(--surface-hover)]"><Plus size={17}/> New chat</button></div>
+      <div className="px-3 text-xs font-medium uppercase tracking-wider text-[var(--muted)]">Recent chats</div>
+      <div className="custom-scrollbar flex-1 overflow-y-auto p-3 space-y-1">
+        {conversations.map(c=><button key={c.id} onClick={async()=>{const res=await fetch(`/api/conversations/${c.id}`);if(res.ok){const d=await res.json();setConversationId(c.id);setMessages(d.messages||[]);}}} className="w-full truncate rounded-lg px-3 py-2.5 text-left text-sm text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]">{c.title}</button>)}
       </div>
-    </div>
-  );
+      <div className="border-t border-[var(--border)] p-3"><button onClick={logout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-white"><LogOut size={17}/> Sign out</button></div>
+    </aside>
+
+    <section className="flex min-w-0 flex-1 flex-col">
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--background)]/90 px-4 backdrop-blur">
+        <button aria-label="Open sidebar" onClick={()=>setSidebarOpen(true)} className="rounded-lg p-2 hover:bg-[var(--surface-hover)] md:hidden"><Menu size={20}/></button>
+        <div className="hidden items-center gap-2 sm:flex"><Bot size={18} className="text-[var(--accent)]"/><span className="text-sm font-medium">BharatAI AI Platform</span></div>
+        <select aria-label="Response language" value={language} onChange={e=>setLanguage(e.target.value)} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)]">
+          {["English","Hindi","Tamil","Telugu","Bengali"].map(x=><option key={x}>{x}</option>)}
+        </select>
+      </header>
+
+      <main className="custom-scrollbar flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+          {messages.length===0 ? <div className="flex min-h-[65vh] flex-col items-center justify-center text-center">
+            <div className="mb-6 grid size-14 place-items-center rounded-2xl border border-[var(--border)] bg-[var(--surface-2)]"><Sparkles size={25} className="text-[var(--accent)]"/></div>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">How can I help you?</h1>
+            <p className="mt-3 max-w-xl text-[var(--muted)]">Ask in English or an Indian language. BharatAI can use grounded knowledge and configured tools when available.</p>
+            <div className="mt-8 grid w-full gap-3 sm:grid-cols-2">{["Explain quantum computing simply","Help me learn Python","Summarize a document","What can BharatAI do?"].map(x=><button key={x} onClick={()=>setInput(x)} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-left text-sm hover:bg-[var(--surface-hover)]">{x}</button>)}</div>
+          </div> : <div className="space-y-8">{messages.map((m,i)=><div key={i} className="group">
+            <div className="mb-2 flex items-center gap-2 text-xs text-[var(--muted)]"><div className={`grid size-7 place-items-center rounded-lg ${m.role==="user"?"bg-[var(--surface-2)]":"bg-[var(--accent)]"}`}>{m.role==="user"?"U":<Bot size={14}/>}</div><span>{m.role==="user"?"You":"BharatAI"}</span></div>
+            <div className="pl-9 text-[15px] leading-7">{m.role==="user"?<p className="whitespace-pre-wrap">{m.content}</p>:<><div className="markdown-body"><ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content||"▌"}</ReactMarkdown></div>{m.content&&<button aria-label="Copy response" onClick={()=>copyText(m.content,i)} className="mt-2 rounded-lg p-2 text-[var(--muted)] hover:bg-[var(--surface-hover)]">{copied===i?<Check size={15}/>:<Copy size={15}/>}</button>}</>}</div>
+          </div>)}<div ref={endRef}/></div>}
+        </div>
+      </main>
+
+      <footer className="shrink-0 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 sm:px-6">
+        <form onSubmit={e=>{e.preventDefault();sendMessage()}} className="mx-auto max-w-3xl">
+          <div className="relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl shadow-black/20 focus-within:border-[var(--accent)]/60">
+            <textarea aria-label="Message BharatAI" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}}} rows={1} disabled={loading} placeholder="Message BharatAI..." className="max-h-40 min-h-14 w-full resize-none bg-transparent px-4 py-4 pr-14 text-sm outline-none placeholder:text-[var(--muted)]"/>
+            <button type={loading?"button":"submit"} onClick={loading?stop:undefined} aria-label={loading?"Stop generation":"Send message"} disabled={!loading&&!input.trim()} className="absolute bottom-2.5 right-2.5 grid size-9 place-items-center rounded-xl bg-[var(--accent)] text-white disabled:opacity-30">{loading?<Square size={15} fill="currentColor"/>:<Send size={16}/>}</button>
+          </div>
+          <p className="py-2 text-center text-[11px] text-[var(--muted)]">BharatAI can make mistakes. Verify important information.</p>
+        </form>
+      </footer>
+    </section>
+  </div>;
 }
