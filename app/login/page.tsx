@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth", {
+      const res = await fetch((process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000") + "/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -25,7 +25,7 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Login failed");
-      router.push("/");
+      localStorage.setItem("bharatai_token", data.token); router.push("/");
     } catch (err: any) {
       setError(err.message);
     } finally {
