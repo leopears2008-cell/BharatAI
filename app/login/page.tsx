@@ -5,7 +5,7 @@ import { Bot, ArrowRight, Loader2 } from "lucide-react";
 export default function LoginPage() {
   const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [loading,setLoading]=useState(false); const [error,setError]=useState(""); const router=useRouter();
   const handleLogin=async(e:React.FormEvent)=>{e.preventDefault();if(!email||password.length<8)return;setLoading(true);setError("");
-    try{const res=await fetch((process.env.NEXT_PUBLIC_PYTHON_API_URL||"http://localhost:8000")+"/api/v1/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});const data=await res.json();if(!res.ok)throw new Error(data.detail||data.error||"Login failed");localStorage.setItem("bharatai_token",data.token);router.push("/");}
+    try{const res=await fetch((process.env.NEXT_PUBLIC_PYTHON_API_URL||"http://localhost:8000")+"/api/v1/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});const data=await res.json();if(!res.ok)throw new Error(data.detail||data.error||"Login failed");localStorage.setItem("bharatai_token",data.token); if(data.refresh_token)localStorage.setItem("bharatai_refresh_token",data.refresh_token); router.push("/");}
     catch(err:any){setError(err.message||"Login failed");}finally{setLoading(false);}
   };
   return <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
