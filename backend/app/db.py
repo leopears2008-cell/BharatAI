@@ -44,11 +44,12 @@ async def init_db():
     async with engine.begin() as conn:
         if engine.url.get_backend_name()=="postgresql":
             await conn.exec_driver_sql("CREATE EXTENSION IF NOT EXISTS vector")
+        await conn.run_sync(Base.metadata.create_all)
+        if engine.url.get_backend_name()=="postgresql":
             await conn.exec_driver_sql("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(512) DEFAULT ''")
             await conn.exec_driver_sql("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(32) DEFAULT 'user'")
             await conn.exec_driver_sql("ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS embedding vector(768)")
             await conn.exec_driver_sql("ALTER TABLE document_chunks ALTER COLUMN embedding TYPE vector(768) USING CASE WHEN embedding IS NULL THEN NULL ELSE embedding::text::vector(768) END")
-        await conn.run_sync(Base.metadata.create_all)
         if engine.url.get_backend_name()=="postgresql":
             await conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_document_chunks_embedding_hnsw ON document_chunks USING hnsw (embedding vector_cosine_ops)")
 async def get_session():
