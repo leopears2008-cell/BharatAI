@@ -82,7 +82,7 @@ export default function Home() {
         <button aria-label="Open sidebar" onClick={()=>setSidebarOpen(true)} className="rounded-lg p-2 hover:bg-[var(--surface-hover)] md:hidden"><Menu size={20}/></button>
         <div className="hidden items-center gap-2 sm:flex"><Bot size={18} className="text-[var(--accent)]"/><span className="text-sm font-medium">BharatAI AI Platform</span></div>
         <select aria-label="Response language" value={language} onChange={e=>setLanguage(e.target.value)} className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)]">
-          {["English","Hindi","Tamil","Telugu","Bengali"].map(x=><option key={x}>{x}</option>)}
+          {["English","Hindi","Tamil","Telugu","Bengali","Malayalam","Kannada","Marathi","Punjabi","Gujarati"].map(x=><option key={x}>{x}</option>)}
         </select>
       </header>
 
