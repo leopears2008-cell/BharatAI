@@ -1,48 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
-import fs from "fs";
-import path from "path";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+import { ingestDocument } from "../../../../lib/rag";
 
 export async function POST(req: NextRequest) {
   try {
-    const { title, content } = await req.json();
-    if (!title || !content) {
-      return NextResponse.json({ error: "Missing title or content" }, { status: 400 });
+    const { title, content, url } = await req.json();
+    if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
+      return NextResponse.json({ error: "Title and content are required." }, { status: 400 });
     }
 
-    // Generate embedding
-    const response = await ai.models.embedContent({
-      model: "gemini-embedding-2-preview",
-      contents: content,
-    });
-    const embedding = response.embeddings?.[0]?.values;
-
-    if (!embedding) throw new Error("Failed to generate embedding");
-
-    // Read existing store
-    const storePath = path.join(process.cwd(), "app/lib/vectorStore.json");
-    let store = [];
-    if (fs.existsSync(storePath)) {
-      store = JSON.parse(fs.readFileSync(storePath, "utf-8"));
-    }
-
-    // Append document
-    store.push({
-      id: `doc_${Date.now()}`,
-      title,
-      content,
-      embedding
-    });
-
-    // Write back
-    fs.mkdirSync(path.dirname(storePath), { recursive: true });
-    fs.writeFileSync(storePath, JSON.stringify(store, null, 2));
-
-    return NextResponse.json({ success: true, message: "Document ingested successfully" });
-  } catch (error: any) {
+    const document = await ingestDocument(title.trim(), content, typeof url === "string" ? url : undefined);
+    return NextResponse.json({ success: true, document: { id: document.id, title: document.title } });
+  } catch (error) {
     console.error("Ingestion error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Knowledge ingestion is temporarily unavailable." }, { status: 500 });
   }
 }
