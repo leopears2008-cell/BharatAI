@@ -40,8 +40,8 @@ export default function Home() {
     setMessages([...next,{role:"model",content:""}]); setInput(""); setLoading(true);
     const controller=new AbortController(); abortRef.current=controller;
     try{
-      const res=await fetch("/api/v1/bot",{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,
-        body:JSON.stringify({messages:next,conversationId,language})});
+      const res=await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"}/api/v1/chat",{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,
+        body:JSON.stringify({messages:next,conversation_id:conversationId,language})});
       if(res.status===401){router.push("/login");return;}
       if(!res.ok) throw new Error("request_failed");
       const id=res.headers.get("X-Conversation-Id"); if(id) setConversationId(id);
