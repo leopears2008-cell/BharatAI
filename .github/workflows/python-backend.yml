@@ -34,6 +34,7 @@ jobs:
       JWT_SECRET: test-secret-change-in-ci
       AUTH_REQUIRED: "true"
       PYTHONPATH: .
+      TRUSTED_HOSTS: localhost,127.0.0.1,testserver
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
