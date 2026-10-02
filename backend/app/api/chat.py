@@ -28,7 +28,8 @@ async def agent(req,s):
         for c in calls:contents.append(types.Content(role="user",parts=[types.Part.from_function_response(name=c.name,response={"result":await execute_tool(c.name,dict(c.args or {}))},id=c.id)]))
     return contents,system
 @router.post("/v1/chat")
-async def chat(req:ChatRequest,request:Request,user=Depends(current_user),s:AsyncSession=Depends(dep)):\n    enforce(request)
+async def chat(req:ChatRequest,request:Request,user=Depends(current_user),s:AsyncSession=Depends(dep))
+    enforce(request)
     if not req.messages:raise HTTPException(400,"At least one message is required")
     if len(req.messages[-1].content)>settings.max_message_chars:raise HTTPException(413,"Message is too large")
     cid=req.conversation_id or uuid.uuid4().hex;c=await get_conversation(s,cid,user["sub"])
