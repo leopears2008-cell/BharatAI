@@ -5,19 +5,23 @@ import { createSession, clearSession } from "../../lib/auth";
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
-    if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+    if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+    }
 
-    let user = await db.users.findByEmail(email);
+    let user = await db.users.findByEmail(email.toLowerCase());
     if (!user) {
-      // Auto-register for demo purposes
-      user = await db.users.create({ email, name: email.split("@")[0] });
+      user = await db.users.create({ email: email.toLowerCase(), name: email.split("@")[0] });
     }
 
     await createSession(user.id);
     return NextResponse.json({ success: true, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
     console.error("Auth error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error && error.message.includes("JWT_SECRET") ? error.message : "Authentication service is unavailable." },
+      { status: 500 }
+    );
   }
 }
 
