@@ -1,0 +1,4 @@
+[
+  {"id":"rag-001","question":"What is BharatAI?","expected_sources":["bharatai-overview.md"],"expected_keywords":["BharatAI"]},
+  {"id":"rag-002","question":"Which languages does BharatAI support?","expected_sources":["bharatai-overview.md"],"expected_keywords":["Hindi","Tamil"]}
+]
