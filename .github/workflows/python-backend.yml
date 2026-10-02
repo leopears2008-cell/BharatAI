@@ -5,6 +5,10 @@ on:
     paths: ["backend/**"]
   pull_request:
     paths: ["backend/**"]
+concurrency:
+  group: bharatai-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
