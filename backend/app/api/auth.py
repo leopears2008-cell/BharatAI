@@ -27,7 +27,7 @@ async def login(req:LoginRequest):
 async def refresh(req:RefreshRequest):
  async for session in get_session():
   row=(await session.execute(select(RefreshSession).where(RefreshSession.token_hash==token_hash(req.refresh_token),RefreshSession.revoked_at.is_(None)))).scalar_one_or_none()
-  if not row or row.expires_at<datetime.now(timezone.utc):raise HTTPException(401,"Refresh token expired or revoked.")
+  if not row:raise HTTPException(401,"Refresh token expired or revoked.")\n  expiry=row.expires_at if row.expires_at.tzinfo else row.expires_at.replace(tzinfo=timezone.utc)\n  if expiry<datetime.now(timezone.utc):raise HTTPException(401,"Refresh token expired or revoked.")
   user=(await session.execute(select(User).where(User.id==row.user_id))).scalar_one_or_none()
   if not user:raise HTTPException(401,"User session is invalid.")
   row.revoked_at=datetime.now(timezone.utc);new_refresh=await create_session(session,user);await session.commit()
