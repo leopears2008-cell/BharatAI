@@ -2,26 +2,41 @@
 
 Production-oriented FastAPI backend for BharatAI.
 
-## Production features
-- PostgreSQL + native pgvector cosine retrieval with HNSW
-- SQLite fallback for local development
+## Level-10 architecture
+- FastAPI gateway with CORS, trusted-host protection, readiness and health endpoints
+- Context-aware multi-turn orchestration with automatic context trimming and summaries
+- Planner/router/tool/executor pipeline with bounded iterations and tool validation
+- Gemini primary model with OpenAI-compatible and Qwen-compatible fallback providers
+- PostgreSQL + pgvector + HNSW hybrid semantic/lexical retrieval with deduplication
+- Web search caching and source/citation collection
+- Persistent user memory with explicit list/delete controls
+- JWT access tokens plus rotating persistent refresh sessions
 - Redis distributed rate limiting
-- JWT authentication with scrypt password hashing and role-based authorization
-- JSON request logging, request IDs and Prometheus metrics
-- Integration/e2e test scaffolding
-- Deterministic evaluation/benchmark runner
-- Render and Docker Compose deployment configuration
+- Structured JSON logs, request IDs and Prometheus metrics
+- Deterministic evaluation suite and regression tests
+- Docker/Render deployment configuration
 
 ## Local
-`cd backend`
-`pip install -r requirements.txt`
-Copy `.env.example` to `.env`, then run `uvicorn app.main:app --reload --port 8000`.
+```bash
+cd backend
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
+```
 
-SQLite and the in-memory rate-limit fallback are development conveniences only.
+For production use PostgreSQL/pgvector, Redis, HTTPS, a strong JWT secret, AUTH_REQUIRED=true, a restricted API_CORS_ORIGIN, and explicit TRUSTED_HOSTS. Never commit real API keys.
 
-## Production
-Use PostgreSQL with pgvector, Redis, a strong JWT secret, `AUTH_REQUIRED=true`, HTTPS, and the deployed frontend origin. Set `ADMIN_EMAILS` to trusted administrator emails.
+## API
+- GET /api/health
+- GET /api/readiness
+- POST /api/v1/auth/login
+- POST /api/v1/auth/refresh
+- POST /api/v1/auth/logout
+- POST /api/v1/chat
+- GET /api/v1/conversations
+- PATCH /api/v1/conversations/{id}
+- DELETE /api/v1/conversations/{id}
+- GET/DELETE /api/v1/memory
+- GET /metrics
 
-Gemini embeddings are requested at 768 dimensions. PostgreSQL uses pgvector cosine distance and an HNSW index. If upgrading an existing database from the previous JSON embedding column, run `migrations/001_pgvector.sql` first.
-
-Run the regression benchmark with `cd backend && python evals/run_eval.py`.
+Run tests with pytest -q and the benchmark with python evals/run_eval.py.
