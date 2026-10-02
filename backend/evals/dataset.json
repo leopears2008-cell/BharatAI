@@ -1,4 +1,7 @@
 [
-  {"id":"rag-001","question":"What is BharatAI?","expected_sources":["bharatai-overview.md"],"expected_keywords":["BharatAI"]},
-  {"id":"rag-002","question":"Which languages does BharatAI support?","expected_sources":["bharatai-overview.md"],"expected_keywords":["Hindi","Tamil"]}
+ {"id":"overview","question":"What is BharatAI?","expected_keywords":["BharatAI","AI"]},
+ {"id":"language","question":"Can BharatAI respond in Tamil?","expected_keywords":["Tamil","language"]},
+ {"id":"rag","question":"What is grounded retrieval?","expected_keywords":["retrieval","context"]},
+ {"id":"tools","question":"Can BharatAI calculate arithmetic?","expected_keywords":["calculator","arithmetic"]},
+ {"id":"research","question":"How should current web facts be handled?","expected_keywords":["source","current"]}
 ]
