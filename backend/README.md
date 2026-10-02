@@ -43,3 +43,5 @@ Run tests with pytest -q and the benchmark with python evals/run_eval.py.
 
 
 CI verification uses PostgreSQL/pgvector and Redis service containers with PYTHONPATH configured for pytest.
+
+CI trusted-host test configuration is isolated to GitHub Actions.
