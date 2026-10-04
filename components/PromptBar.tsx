@@ -72,19 +72,19 @@ function SendGlyph({busy,morphDuration,squash,tilt}:{busy:boolean;morphDuration:
 }
 
 export interface PromptBarProps{
- placeholder?:string;sources?:PromptSource[];commands?:PromptCommand[];models?:PromptModel[];defaultModel?:string;efforts?:string[];defaultEffort?:string;
+ placeholder?:string;defaultValue?:string;sources?:PromptSource[];commands?:PromptCommand[];models?:PromptModel[];defaultModel?:string;efforts?:string[];defaultEffort?:string;
  onEffortChange?:(effort:string)=>void;busy?:boolean;onSend?:(text:string,meta:{attachments:PromptAttachment[];model?:PromptModel;effort:string})=>void|Promise<void>;onStop?:()=>void;
  onAttach?:()=>Promise<PromptAttachment[]|PromptAttachment|void>|PromptAttachment[]|PromptAttachment|void;
  onDictate?:()=>Promise<string|void>|string|void;background?:string;color?:string;menuBackground?:string;sparkColor?:string;sparkBoost?:number;width?:number;radius?:number;maxRows?:number;morphDuration?:number;squash?:number;tilt?:number;pressScale?:number;className?:string;
 }
 export default function PromptBar({
- placeholder="Ask anything",sources=DEFAULT_SOURCES,commands=DEFAULT_COMMANDS,models=DEFAULT_MODELS,defaultModel="",efforts=DEFAULT_EFFORTS,defaultEffort="",onEffortChange,busy=false,onSend,onStop,onAttach,onDictate,
+ placeholder="Ask anything",defaultValue="",sources=DEFAULT_SOURCES,commands=DEFAULT_COMMANDS,models=DEFAULT_MODELS,defaultModel="",efforts=DEFAULT_EFFORTS,defaultEffort="",onEffortChange,busy=false,onSend,onStop,onAttach,onDictate,
  background="#27272a",color="#f5f5f5",menuBackground="#323236",sparkColor="#b39dff",sparkBoost=1,width=400,radius=16,maxRows=5,morphDuration=240,squash=.12,tilt=8,pressScale=.96,className=""
 }:PromptBarProps){
  const reduce=useReducedMotion(),rootRef=useRef<HTMLDivElement>(null),inputRef=useRef<HTMLTextAreaElement>(null),glowRef=useRef<HTMLSpanElement>(null),sparkRef=useRef<HTMLCanvasElement>(null);
  const typing=useRef({energy:0,strokes:0}),rowRefs=useRef<HTMLButtonElement[]>([]),lastOpen=useRef<string|null>(null),dictation=useRef(0),latest=useRef({onSend,onStop,onAttach,onDictate,onEffortChange});
  latest.current={onSend,onStop,onAttach,onDictate,onEffortChange};
- const [draft,setDraft]=useState(""),[attachments,setAttachments]=useState<PromptAttachment[]>([]),[modelKey,setModelKey]=useState(defaultModel||models[0]?.key||""),[plusOpen,setPlusOpen]=useState(false),[modelOpen,setModelOpen]=useState(false),[effortOpen,setEffortOpen]=useState(false);
+ const [draft,setDraft]=useState(defaultValue),[attachments,setAttachments]=useState<PromptAttachment[]>([]),[modelKey,setModelKey]=useState(defaultModel||models[0]?.key||""),[plusOpen,setPlusOpen]=useState(false),[modelOpen,setModelOpen]=useState(false),[effortOpen,setEffortOpen]=useState(false);
  const [effortIndex,setEffortIndex]=useState(()=>{const i=efforts.indexOf(defaultEffort);return i>=0?i:Math.max(0,Math.floor((efforts.length-1)/2))}),[dismissed,setDismissed]=useState(false),[active,setActive]=useState(0),[listening,setListening]=useState(false),[pressed,setPressed]=useState(false);
  const model=models.find(m=>m.key===modelKey)||models[0],token=dismissed?null:parseToken(draft);
  const open=plusOpen?"at":(token?.kind||(modelOpen?"model":effortOpen?"effort":null)),query=plusOpen?"":(token?.query||"");
