@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Menu, Plus, Send, Square, Bot, LogOut, Sparkles, Copy, Check } from "lucide-react";
+import { Menu, Plus, Bot, LogOut, Sparkles, Copy, Check } from "lucide-react";
+import PromptBar from "../components/PromptBar";
+import type { PromptAttachment } from "../components/PromptBar";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -11,7 +13,7 @@ type Message = { role: "user" | "model"; content: string };
 export default function Home() {
   const router = useRouter();
   const [messages,setMessages]=useState<Message[]>([]);
-  const [input,setInput]=useState("");
+  const [promptSeed,setPromptSeed]=useState("");
   const [loading,setLoading]=useState(false);
   const [conversations,setConversations]=useState<any[]>([]);
   const [sidebarOpen,setSidebarOpen]=useState(true);
@@ -31,11 +33,12 @@ export default function Home() {
     if(res.ok) setConversations(await res.json());
   }
 
-  function newChat(){ setMessages([]); setConversationId(undefined); setInput(""); }
+  function newChat(){ setMessages([]); setConversationId(undefined); setPromptSeed(""); }
   async function logout(){ localStorage.removeItem("bharatai_token"); router.push("/login"); }
 
-  async function sendMessage(){
-    const text=input.trim();
+  async function sendMessage(textValue:string, meta?:{attachments:PromptAttachment[]}):Promise<void>{
+    const attachmentNames=(meta?.attachments||[]).map(file=>file instanceof File?file.name:String(file));
+    const text=[textValue.trim(),attachmentNames.length?`Attached files: ${attachmentNames.join(", ")}`:""].filter(Boolean).join("\n\n");
     if(!text || loading) return;
     const next=[...messages,{role:"user" as const,content:text}];
     setMessages([...next,{role:"model",content:""}]); setInput(""); setLoading(true);
@@ -92,7 +95,7 @@ export default function Home() {
             <div className="mb-6 grid size-14 place-items-center rounded-2xl border border-[var(--border)] bg-[var(--surface-2)]"><Sparkles size={25} className="text-[var(--accent)]"/></div>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">How can I help you?</h1>
             <p className="mt-3 max-w-xl text-[var(--muted)]">Ask in English or an Indian language. BharatAI can use grounded knowledge and configured tools when available.</p>
-            <div className="mt-8 grid w-full gap-3 sm:grid-cols-2">{["Explain quantum computing simply","Help me learn Python","Summarize a document","What can BharatAI do?"].map(x=><button key={x} onClick={()=>setInput(x)} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-left text-sm hover:bg-[var(--surface-hover)]">{x}</button>)}</div>
+            <div className="mt-8 grid w-full gap-3 sm:grid-cols-2">{["Explain quantum computing simply","Help me learn Python","Summarize a document","What can BharatAI do?"].map(x=><button key={x} onClick={()=>setPromptSeed(x)} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-left text-sm hover:bg-[var(--surface-hover)]">{x}</button>)}</div>
           </div> : <div className="space-y-8">{messages.map((m,i)=><div key={i} className="group">
             <div className="mb-2 flex items-center gap-2 text-xs text-[var(--muted)]"><div className={"grid size-7 place-items-center rounded-lg "+(m.role==="user"?"bg-[var(--surface-2)]":"bg-[var(--accent)]")}>{m.role==="user"?"U":<Bot size={14}/>}</div><span>{m.role==="user"?"You":"BharatAI"}</span></div>
             <div className="pl-9 text-[15px] leading-7">{m.role==="user"?<p className="whitespace-pre-wrap">{m.content}</p>:<><div className="markdown-body"><ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content||"▌"}</ReactMarkdown></div>{m.content&&<button aria-label="Copy response" onClick={()=>copyText(m.content,i)} className="mt-2 rounded-lg p-2 text-[var(--muted)] hover:bg-[var(--surface-hover)]">{copied===i?<Check size={15}/>:<Copy size={15}/>}</button>}</>}</div>
@@ -101,13 +104,35 @@ export default function Home() {
       </main>
 
       <footer className="shrink-0 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 sm:px-6">
-        <form onSubmit={e=>{e.preventDefault();sendMessage()}} className="mx-auto max-w-3xl">
-          <div className="relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl shadow-black/20 focus-within:border-[var(--accent)]/60">
-            <textarea aria-label="Message BharatAI" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}}} rows={1} disabled={loading} placeholder="Message BharatAI..." className="max-h-40 min-h-14 w-full resize-none bg-transparent px-4 py-4 pr-14 text-sm outline-none placeholder:text-[var(--muted)]"/>
-            <button type={loading?"button":"submit"} onClick={loading?stop:undefined} aria-label={loading?"Stop generation":"Send message"} disabled={!loading&&!input.trim()} className="absolute bottom-2.5 right-2.5 grid size-9 place-items-center rounded-xl bg-[var(--accent)] text-white disabled:opacity-30">{loading?<Square size={15} fill="currentColor"/>:<Send size={16}/>}</button>
-          </div>
+        <div className="mx-auto max-w-3xl">
+          <PromptBar
+            key={promptSeed || "empty-prompt"}
+            defaultValue={promptSeed}
+            placeholder="Message BharatAI..."
+            models={[{key:"bharatai",name:"BharatAI",tag:"Flagship"},{key:"fast",name:"BharatAI Fast",tag:"Fast"}]}
+            efforts={["Low","Medium","High","Extra","Max"]}
+            busy={loading}
+            onSend={sendMessage}
+            onStop={stop}
+            onAttach={() => new Promise<PromptAttachment[]>(resolve => {
+              const input=document.createElement("input");
+              input.type="file"; input.multiple=true; input.accept="image/*,.pdf,.doc,.docx,.txt,.csv";
+              input.onchange=()=>resolve(Array.from(input.files||[]));
+              input.click();
+            })}
+            onDictate={() => new Promise<string|void>(resolve => {
+              const SpeechRecognition=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
+              if(!SpeechRecognition){resolve();return;}
+              const recognition=new SpeechRecognition();
+              recognition.lang=language==="Tamil"?"ta-IN":language==="Hindi"?"hi-IN":"en-IN";
+              recognition.interimResults=false; recognition.maxAlternatives=1;
+              recognition.onresult=(event:any)=>resolve(event.results?.[0]?.[0]?.transcript||"");
+              recognition.onerror=()=>resolve(); recognition.start();
+            })}
+            background="#111418" color="#F4F5F7" menuBackground="#1B2027" sparkColor="#A5B4FC" width={Infinity} radius={16} maxRows={5}
+          />
           <p className="py-2 text-center text-[11px] text-[var(--muted)]">BharatAI can make mistakes. Verify important information.</p>
-        </form>
+        </div>
       </footer>
     </section>
   </div>;
