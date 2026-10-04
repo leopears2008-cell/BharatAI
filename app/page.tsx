@@ -41,7 +41,7 @@ export default function Home() {
     const text=[textValue.trim(),attachmentNames.length?`Attached files: ${attachmentNames.join(", ")}`:""].filter(Boolean).join("\n\n");
     if(!text || loading) return;
     const next=[...messages,{role:"user" as const,content:text}];
-    setMessages([...next,{role:"model",content:""}]); setInput(""); setLoading(true);
+    setMessages([...next,{role:"model",content:""}]); setPromptSeed(""); setLoading(true);
     const controller=new AbortController(); abortRef.current=controller;
     try{
       const token=localStorage.getItem("bharatai_token"); const api=(process.env.NEXT_PUBLIC_PYTHON_API_URL || "http://localhost:8000"); const res=await fetch(api+"/api/v1/chat",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}: {})},signal:controller.signal,
