@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType, CSSProperties, PointerEvent, KeyboardEvent } from "react";
-import { isValidElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { isValidElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { animate, useMotionValue, useMotionValueEvent, useReducedMotion } from "motion/react";
 import {
   ArrowDown,
@@ -88,10 +88,10 @@ export default function PromptBar({
  const [effortIndex,setEffortIndex]=useState(()=>{const i=efforts.indexOf(defaultEffort);return i>=0?i:Math.max(0,Math.floor((efforts.length-1)/2))}),[dismissed,setDismissed]=useState(false),[active,setActive]=useState(0),[listening,setListening]=useState(false),[pressed,setPressed]=useState(false);
  const model=models.find(m=>m.key===modelKey)||models[0],token=dismissed?null:parseToken(draft);
  const open=plusOpen?"at":(token?.kind||(modelOpen?"model":effortOpen?"effort":null)),query=plusOpen?"":(token?.query||"");
- const list=useMemo(()=>open==="at"?sources.filter(s=>s.name.toLowerCase().includes(query)):open==="slash"?commands.filter(c=>c.name.slice(1).toLowerCase().startsWith(query)):open==="model"?models:[],[open,query,sources,commands,models]);
+ const list=open==="at"?sources.filter(s=>s.name.toLowerCase().includes(query)):open==="slash"?commands.filter(c=>c.name.slice(1).toLowerCase().startsWith(query)):open==="model"?models:[];
  const cursor=Math.min(active,Math.max(0,list.length-1)),canSend=draft.trim().length>0||attachments.length>0,armed=busy||canSend,level=efforts[effortIndex]||"",maxed=efforts.length>1&&effortIndex===efforts.length-1;
  const focusInput=()=>inputRef.current?.focus({preventScroll:true});
- const closeMenus=useCallback(()=>{setPlusOpen(false);setModelOpen(false);setEffortOpen(false)},[]);
+ const closeMenus=()=>{setPlusOpen(false);setModelOpen(false);setEffortOpen(false)};
  useLayoutEffect(()=>{const glow=glowRef.current;if(!glow||!open)return;const row=rowRefs.current[cursor];if(!row){glow.style.opacity="0";return}const fresh=lastOpen.current!==open;lastOpen.current=open;if(fresh)glow.style.transition="none";glow.style.top=`${row.offsetTop}px`;glow.style.height=`${row.offsetHeight}px`;glow.style.opacity="1";if(fresh){void glow.offsetHeight;glow.style.transition=""}},[open,cursor,list]);
  useEffect(()=>{if(!open)lastOpen.current=null},[open]);
  useEffect(()=>{if(!plusOpen&&!modelOpen&&!effortOpen)return;const f=(e:PointerEvent)=>{if(!rootRef.current?.contains(e.target as Node))closeMenus()};document.addEventListener("pointerdown",f);return()=>document.removeEventListener("pointerdown",f)},[plusOpen,modelOpen,effortOpen,closeMenus]);
