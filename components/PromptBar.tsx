@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentType, CSSProperties, KeyboardEvent } from "react";
+import type { ComponentType, CSSProperties, KeyboardEvent, PointerEvent } from "react";
 import { isValidElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { animate, useMotionValue, useMotionValueEvent, useReducedMotion } from "motion/react";
 import {
