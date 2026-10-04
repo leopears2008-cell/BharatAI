@@ -18,7 +18,6 @@ import {
   Sparkles,
   Check,
 } from "lucide-react";
-import "./PromptBar.css";
 
 const ARROW_UP=[12,4.5,18.5,11,14.25,11,14.25,19.5,9.75,19.5,9.75,11,5.5,11];
 const SQUARE=[12,6,18,6,18,12,18,18,6,18,6,12,6,6];
