@@ -129,7 +129,7 @@ export default function Home() {
               recognition.onresult=(event:any)=>resolve(event.results?.[0]?.[0]?.transcript||"");
               recognition.onerror=()=>resolve(); recognition.start();
             })}
-            background="#111418" color="#F4F5F7" menuBackground="#1B2027" sparkColor="#A5B4FC" width={Infinity} radius={16} maxRows={5}
+            background="#111418" color="#F4F5F7" menuBackground="#1B2027" sparkColor="#A5B4FC" width={720} radius={16} maxRows={5}
           />
           <p className="py-2 text-center text-[11px] text-[var(--muted)]">BharatAI can make mistakes. Verify important information.</p>
         </div>
